@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>GitHub Uploader | prime xuu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      display: flex;
+      flex-direction: column;
+      color: #fff;
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    header h1 {
+      font-size: 2.8rem;
+      background: linear-gradient(90deg, #00f2fe, #4facfe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      opacity: 0.8;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      padding: 35px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.4);
+      animation: fadeIn 1s ease;
+    }
+
+    .card h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    input {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    input::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    button {
+      background: linear-gradient(90deg, #4facfe, #00f2fe);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,242,254,.6);
+    }
+
+    .status {
+      text-align: center;
+      font-size: 0.85rem;
+      margin-top: 10px;
+      opacity: 0.8;
+    }
+
+    footer {
+      text-align: center;
+      padding: 15px;
+      font-size: 0.8rem;
+      opacity: 0.6;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>GitHub Uploader</h1>
+  <p>Upload file langsung ke repository GitHub</p>
+</header>
+
+<main>
+  <div class="card">
+    <h2>📁 Upload File</h2>
+
+    <input type="text" id="token" placeholder="GitHub Token (PAT)">
+    <input type="text" id="owner" placeholder="Username GitHub">
+    <input type="text" id="repo" placeholder="Nama Repository">
+    <input type="text" id="path" placeholder="Path file (contoh: upload/test.txt)">
+    <input type="file" id="file">
+
+    <button onclick="uploadFile()">Upload ke GitHub</button>
+
+    <div class="status" id="status"></div>
+  </div>
+</main>
+
+<footer>
+  © 2003 prime xuu
+</footer>
+
+<script>
+  async function uploadFile() {
+    const token = document.getElementById("token").value;
+    const owner = document.getElementById("owner").value;
+    const repo = document.getElementById("repo").value;
+    const path = document.getElementById("path").value;
+    const fileInput = document.getElementById("file");
+    const status = document.getElementById("status");
+
+    if (!token || !owner || !repo || !path || !fileInput.files[0]) {
+      status.textContent = "❌ Lengkapi semua data!";
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const content = await file.arrayBuffer();
+    const base64 = btoa(
+      new Uint8Array(content)
+        .reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+
+    status.textContent = "⏳ Mengupload file...";
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `token ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: `upload ${file.name}`,
+          content: base64
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        status.textContent = "✅ Upload berhasil!";
+      } else {
+        status.textContent = "❌ Gagal: " + (data.message || "error");
+      }
+    } catch (err) {
+      status.textContent = "❌ Error koneksi";
+    }
+  }
+</script>
+
+</body>
+</html>
